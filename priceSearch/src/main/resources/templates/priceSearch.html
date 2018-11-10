@@ -3,15 +3,29 @@
 <head>
     <title>Getting Started: Serving Web Content</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" th:href="@{/css/style.css}" />
 </head>
 <body>
 
-<table>
+<div style="padding-bottom: 10px">
+    <form method="GET" action="/priceSearch">
+
+        Поиск:
+        <input type="text" name="search" th:value="${currentSearchString}" size="100">
+        <input type="submit" value="Найти"></br>
+
+    </form>
+</div>
+
+<table class="search-result-table">
     <thead>
     <tr>
         <th> Name </th>
         <th> Price </th>
         <th> Stock </th>
+        <th> </th>
+        <th> </th>
+        <th> </th>
     </tr>
     </thead>
     <tbody>
@@ -22,6 +36,9 @@
         <td><span th:text="${item.name}"> name </span></td>
         <td><span th:text="${item.price}"> price </span></td>
         <td><span th:text="${item.stock}"> </span></td>
+        <td><span th:text="${item.supplier}"> </span></td>
+        <td><span th:text="${item.code}"> </span></td>
+        <td><span th:text="${item.comment}"> </span></td>
     </tr>
     </tbody>
 </table>

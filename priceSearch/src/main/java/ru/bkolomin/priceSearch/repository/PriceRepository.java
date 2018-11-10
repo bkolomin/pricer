@@ -46,20 +46,22 @@ public class PriceRepository {
 
     public List<PriceItem> findByName(String name){
 
-        String[] words = name.toUpperCase().split(" ");
+        String[] words = name.split(" ");
 
         String condition = "";
 
         for(int i = 0; i < words.length; i++){
 
-            condition = condition + (condition.length() == 0?"":" AND ") + "(price.name LIKE '%' || UPPER(?) || '%')";
+            condition = condition + (condition.length() == 0?"":" AND ") + "(UPPER(price.name) LIKE '%' || UPPER(?) || '%')";
 
         }
 
 
-        String sql = "SELECT * FROM price WHERE ? LIMIT 100;".replace("?", condition);
+        String sql = "SELECT * FROM price WHERE ? ORDER BY price.price LIMIT 100;".replace("?", condition);
 
         List<PriceItem> list = jdbcTemplate.query(sql, ROW_MAPPER, words);
+
+        //List<PriceItem> list = jdbcTemplate.query("SELECT * FROM price WHERE UPPER(name) LIKE  '%' || UPPER(?) || '%' LIMIT 100;", ROW_MAPPER, "ЧЕРНЫЙ");
 
         return list;
 

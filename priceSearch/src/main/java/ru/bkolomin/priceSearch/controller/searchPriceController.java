@@ -21,11 +21,13 @@ public class searchPriceController {
     }
 
     @GetMapping("/priceSearch")
-    public String priceSearch(@RequestParam(name="name", required=false, defaultValue = "test") String name, Model model) {
+    public String priceSearch(@RequestParam(name="search", required=false, defaultValue = "") String searchString, Model model) {
 
-        ArrayList<PriceItem> items = (ArrayList<PriceItem>)searchPriceService.findByName(name);
+        ArrayList<PriceItem> items = (ArrayList<PriceItem>)searchPriceService.findByName(searchString);
 
         model.addAttribute("items", items);
+
+        model.addAttribute("currentSearchString", searchString);
 
         return "priceSearch";
     }

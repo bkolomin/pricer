@@ -1,15 +1,18 @@
-package ru.bkolomin.priceLoader.Service;
+package ru.bkolomin.priceLoader.service;
 
 import org.apache.poi.ss.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.bkolomin.priceLoader.Models.PriceItem;
+import ru.bkolomin.priceLoader.models.PriceItem;
 import ru.bkolomin.priceLoader.PriceLoaderApplication;
 import ru.bkolomin.priceLoader.repository.PriceRepository;
 
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class PriceService {
+public class PriceService {//
 
     static Logger logger = LoggerFactory.getLogger(PriceLoaderApplication.class);
 
@@ -47,7 +50,7 @@ public class PriceService {
 
             }else {
 
-                result = result + cell.toString() + ";";
+                result = result + (result.isEmpty()?"":"; ") + cell.toString();
 
             }
 
@@ -86,7 +89,38 @@ public class PriceService {
 
     }
 
-    public List<PriceItem> getPriceItems(String fileName){
+    private Map<String, Integer[]> getSupplierSettings(String supplier) {
+
+        Map<String, Integer[]> settings = new HashMap<>();
+
+        switch(supplier){
+
+            case "Верисел":
+                settings.put("comment", new Integer[]{1, 2, 3, 4});
+                settings.put("code", new Integer[]{5, 6, 7});
+                settings.put("name", new Integer[]{8});
+                settings.put("price", new Integer[]{11});
+                settings.put("stock", new Integer[]{12});
+                break;
+            case "Статен":
+                settings.put("comment", new Integer[]{4, 5, 8});
+                settings.put("code", new Integer[]{1, 7});
+                settings.put("name", new Integer[]{2});
+                settings.put("price", new Integer[]{14});
+                settings.put("stock", new Integer[]{18});
+                break;
+            default:
+                logger.error("ERROR!!!! setting not found for supplier ?", supplier);
+                break;
+        }
+
+        return settings;
+
+    }
+
+    public List<PriceItem> getPriceItems(String supplier, String fileName){
+
+        long start = System.currentTimeMillis();
 
         ArrayList<PriceItem> list = new ArrayList<>();
 
@@ -95,23 +129,16 @@ public class PriceService {
         try {
             workbook = WorkbookFactory.create(new File(fileName));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("ERROR!!!" + e.getMessage());
             return list;
         }
 
 
-        Map<String, Integer[]> settings = new HashMap<>();
 
-        settings.put("comment", new Integer[]{1, 2, 3, 4});
-        settings.put("code",	new Integer[]{5, 6, 7});
-        settings.put("name", 	new Integer[]{8});
-        settings.put("price",	new Integer[]{11});
-        settings.put("stock", 	new Integer[]{12});
+        Map<String, Integer[]> settings = getSupplierSettings(supplier);
 
 
         for(Sheet sheet: workbook) {
-            System.out.println("=> " + sheet.getSheetName());
-
 
             for (Row row: sheet) {
 
@@ -124,7 +151,7 @@ public class PriceService {
 
                 if(!name.isEmpty() && price != 0 ) {
 
-                    PriceItem priceItem = new PriceItem("Верисел", rowNumber, comment, code, name, price, stock);
+                    PriceItem priceItem = new PriceItem(supplier, rowNumber, comment, code, name, price, stock);
 
                     list.add(priceItem);
 
@@ -140,29 +167,52 @@ public class PriceService {
             e.printStackTrace();
         }
 
+        long end = System.currentTimeMillis();
+
+        System.out.println("  Excel read: total time taken = " + (end - start) + " ms");
+
+
         return list;
 
     }
 
     public void loadAllFiles(){
 
-        List<PriceItem> list = getPriceItems("D:\\_Share\\_pricer\\Верисел.xls");
+
+        File f = new File("D:\\_Share\\_pricer\\");
+        File[] matchingFiles = f.listFiles(new FilenameFilter() {
+                                               public boolean accept(File dir, String name) {
+                                                   return name.endsWith("xls") || name.endsWith("xlsx");
+                                               }
+                                           });
+
+        for(File file: matchingFiles){
+
+            logger.error("file: " + file.getAbsolutePath());
+
+
+            String supplier = FilenameUtils.removeExtension(file.getName());
+
+
+            List<PriceItem> list = getPriceItems(supplier, file.getAbsolutePath());
 
 
 
-        logger.error("rows count: " + priceRepository.getRowsCount());
+            logger.error("  supplier: " + supplier);
 
-        priceRepository.deleteAll("Верисел");
+            logger.error("  rows count before delete: " + priceRepository.getRowsCount());
 
-        logger.error("rows count: " + priceRepository.getRowsCount());
+            priceRepository.deleteAll(supplier);
 
-        for(PriceItem priceItem: list){
+            logger.error("  rows count after delete: " + priceRepository.getRowsCount());
 
-            priceRepository.save(priceItem);
+
+            priceRepository.saveAll(list);
+
+
+            logger.error("  rows count after file parse: " + priceRepository.getRowsCount());
 
         }
-
-        logger.error("rows count: " + priceRepository.getRowsCount());
 
     }
 
