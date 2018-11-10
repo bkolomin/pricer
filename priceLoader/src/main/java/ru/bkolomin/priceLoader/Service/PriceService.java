@@ -1,9 +1,12 @@
 package ru.bkolomin.priceLoader.Service;
 
 import org.apache.poi.ss.usermodel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.bkolomin.priceLoader.Models.PriceItem;
+import ru.bkolomin.priceLoader.PriceLoaderApplication;
 import ru.bkolomin.priceLoader.repository.PriceRepository;
 
 import java.io.File;
@@ -15,6 +18,8 @@ import java.util.Map;
 
 @Component
 public class PriceService {
+
+    static Logger logger = LoggerFactory.getLogger(PriceLoaderApplication.class);
 
     private PriceRepository priceRepository;
 
@@ -144,13 +149,20 @@ public class PriceService {
         List<PriceItem> list = getPriceItems("D:\\_Share\\_pricer\\Верисел.xls");
 
 
+
+        logger.error("rows count: " + priceRepository.getRowsCount());
+
         priceRepository.deleteAll("Верисел");
+
+        logger.error("rows count: " + priceRepository.getRowsCount());
 
         for(PriceItem priceItem: list){
 
             priceRepository.save(priceItem);
 
         }
+
+        logger.error("rows count: " + priceRepository.getRowsCount());
 
     }
 

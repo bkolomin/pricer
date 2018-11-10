@@ -1,4 +1,4 @@
-package ru.bkolomin.priceLoader.Models;
+package ru.bkolomin.priceSearch.models;
 
 public class PriceItem {
 
@@ -9,6 +9,9 @@ public class PriceItem {
     private String name;
     private Double price;
     private String stock;
+
+    public PriceItem() {
+    }
 
     public PriceItem(String supplier, Integer rowNumber, String comment, String code, String name, Double price, String stock) {
         this.supplier = supplier;
