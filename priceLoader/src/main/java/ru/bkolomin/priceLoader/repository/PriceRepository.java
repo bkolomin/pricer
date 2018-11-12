@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ru.bkolomin.priceLoader.models.PriceItem;
 
 import java.util.List;
@@ -37,17 +38,8 @@ public class PriceRepository {
         jdbcTemplate.update("DELETE FROM price WHERE supplier=(?)", supplier);
     }
 
-    public void save(PriceItem priceItem){
-
-        jdbcTemplate.update("INSERT INTO price (supplier, comment, code, name, price, stock) VALUES (?, ?, ?, ?, ?, ?)",
-                priceItem.getSupplier(), priceItem.getComment(), priceItem.getCode(), priceItem.getName(), priceItem.getPrice(), priceItem.getStock());
-
-    }
-
+    @Transactional
     public void saveAll(List<PriceItem> list){
-
-        // TO DO: save at batch
-        //https://stackoverflow.com/questions/3784197/efficient-way-to-do-batch-inserts-with-jdbc
 
         long start = System.currentTimeMillis();
 
@@ -63,15 +55,22 @@ public class PriceRepository {
 
     }
 
-    public List<PriceItem> findByName(String name){
+    public void save(PriceItem priceItem){
 
-        String[] words = name.split(" ");
+        jdbcTemplate.update("INSERT INTO price (supplier, comment, scode, vcode, name, price, stock, priceDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                priceItem.getSupplier(), priceItem.getComment(), priceItem.getScode(), priceItem.getVcode(), priceItem.getName(), priceItem.getPrice(), priceItem.getStock(), priceItem.getPriceDate());
+
+    }
+
+    public List<PriceItem> find(String searchString){
+
+        String[] words = searchString.split(" ");
 
         String condition = "";
 
         for(int i = 0; i < words.length; i++){
 
-            condition = condition + (condition.length() == 0?"":" AND ") + "(UPPER(price.name) LIKE '%' || UPPER(?) || '%')";
+            condition = condition + (condition.length() == 0?"":" AND ") + "(UPPER(CONCAT(price.name, ' ', price.vcode, ' ', price.scode)) LIKE '%' || UPPER(?) || '%')";
 
         }
 
@@ -83,6 +82,14 @@ public class PriceRepository {
         //List<PriceItem> list = jdbcTemplate.query("SELECT * FROM price WHERE UPPER(name) LIKE  '%' || UPPER(?) || '%' LIMIT 100;", ROW_MAPPER, "ЧЕРНЫЙ");
 
         return list;
+
+    }
+
+    public String getDBSize(){
+
+        String sql = "SELECT pg_size_pretty(pg_database_size('prices'))";
+
+        return jdbcTemplate.queryForObject(sql, String.class);
 
     }
 
