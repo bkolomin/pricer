@@ -1,5 +1,7 @@
 package ru.bkolomin.priceLoader.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.poi.ss.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +16,7 @@ import org.apache.commons.io.FilenameUtils;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class PriceService {//
@@ -31,22 +30,26 @@ public class PriceService {//
         this.priceRepository = priceRepository;
     }
 
-    private String getStringValue(Row row, Map<String, Integer[]> settings, String name){
+    private String getStringValue(Row row, Map<String, List<Integer>> settings, String name){
 
         String result = "";
 
-        Integer[] cellSettings = settings.get(name);
+        List<Integer> cellSettings = settings.get(name);
 
         if(cellSettings == null){
             return "";
         }
 
 
-        for(int i = 0; i < cellSettings.length; i++){
+        for(int i = 0; i < cellSettings.size(); i++){
 
-            Cell cell = row.getCell(cellSettings[i] - 1);
+            Cell cell = row.getCell(cellSettings.get(i) - 1);
 
-            if(cell == null || cell.getCellType() == CellType.BLANK){
+            if(cell == null || cell.getCellType() == CellType.BLANK) {
+
+            }else if((name == "vcode" || name == "scode") && cell.getCellType() == CellType.NUMERIC){
+
+                result = result + (result.isEmpty()?"":"; ") + String.format ("%d", (long)cell.getNumericCellValue());
 
             }else {
 
@@ -60,20 +63,20 @@ public class PriceService {//
 
     }
 
-    private Double getPrice(Row row, Map<String, Integer[]> settings, String name){
+    private Double getPrice(Row row, Map<String, List<Integer>> settings, String name){
 
         Double result = 0d;
 
-        Integer[] cellSettings = settings.get(name);
+        List<Integer> cellSettings = settings.get(name);
 
         if(cellSettings == null){
             return 0d;
         }
 
 
-        for(int i = 0; i < cellSettings.length; i++){
+        for(int i = 0; i < cellSettings.size(); i++){
 
-            Cell cell = row.getCell(cellSettings[i] - 1);
+            Cell cell = row.getCell(cellSettings.get(i) - 1);
 
             if(cell == null || cell.getCellType() != CellType.NUMERIC){
 
@@ -89,36 +92,7 @@ public class PriceService {//
 
     }
 
-    private Map<String, Integer[]> getSupplierSettings(String supplier) {
-
-        Map<String, Integer[]> settings = new HashMap<>();
-
-        switch(supplier){
-
-            case "Верисел":
-                settings.put("comment", new Integer[]{1, 2, 3, 4});
-                settings.put("code", new Integer[]{5, 6, 7});
-                settings.put("name", new Integer[]{8});
-                settings.put("price", new Integer[]{11});
-                settings.put("stock", new Integer[]{12});
-                break;
-            case "Статен":
-                settings.put("comment", new Integer[]{4, 5, 8});
-                settings.put("code", new Integer[]{1, 7});
-                settings.put("name", new Integer[]{2});
-                settings.put("price", new Integer[]{14});
-                settings.put("stock", new Integer[]{18});
-                break;
-            default:
-                logger.error("ERROR!!!! setting not found for supplier ?", supplier);
-                break;
-        }
-
-        return settings;
-
-    }
-
-    public List<PriceItem> getPriceItems(String supplier, String fileName){
+    public List<PriceItem> getPriceItems(String supplier, Map<String, Map<String, List<Integer>>> settings, String fileName){
 
         long start = System.currentTimeMillis();
 
@@ -129,13 +103,21 @@ public class PriceService {//
         try {
             workbook = WorkbookFactory.create(new File(fileName));
         } catch (IOException e) {
-            logger.error("ERROR!!!" + e.getMessage());
-            return list;
+            logger.error("ERROR!!! ошибка открытия файла прайса: " + e.getMessage());
+            return null;
         }
 
 
 
-        Map<String, Integer[]> settings = getSupplierSettings(supplier);
+        Map<String, List<Integer>> supplierSettings = settings.get(supplier);
+
+        if(supplierSettings == null)
+            supplierSettings = settings.get("default");
+
+        if(supplierSettings == null){
+            logger.error("ERROR!!! не найдены настройки поставщика и настройки default");
+            return null;
+        }
 
 
         for(Sheet sheet: workbook) {
@@ -143,15 +125,16 @@ public class PriceService {//
             for (Row row: sheet) {
 
                 Integer rowNumber = row.getRowNum();
-                String comment = getStringValue(row, settings, "comment");
-                String code = getStringValue(row, settings, "code");
-                String name = getStringValue(row, settings, "name");
-                Double price = getPrice(row, settings, "price");
-                String stock = getStringValue(row, settings, "stock");
+                String comment  = getStringValue(row,  supplierSettings, "comment");
+                String scode    = getStringValue(row,  supplierSettings, "scode");
+                String vcode    = getStringValue(row,  supplierSettings, "vcode");
+                String name     = getStringValue(row,  supplierSettings, "name");
+                Double price    = getPrice(row,        supplierSettings, "price");
+                String stock    = getStringValue(row,  supplierSettings, "stock");
 
                 if(!name.isEmpty() && price != 0 ) {
 
-                    PriceItem priceItem = new PriceItem(supplier, rowNumber, comment, code, name, price, stock);
+                    PriceItem priceItem = new PriceItem(supplier, rowNumber, comment, scode, vcode, name, price, stock, new Date());
 
                     list.add(priceItem);
 
@@ -169,20 +152,43 @@ public class PriceService {//
 
         long end = System.currentTimeMillis();
 
-        System.out.println("  Excel read: total time taken = " + (end - start) + " ms");
+        System.out.println("  excel read: total time taken = " + (end - start) + " ms");
 
 
         return list;
 
     }
 
+    private Map<String, Map<String, List<Integer>>> readSettings(){
+
+       Map<String, Map<String, List<Integer>>> settings = new HashMap<>();
+
+       ObjectMapper mapper = new ObjectMapper();
+
+       try {
+            settings = mapper.readValue(new File("D:\\_Share\\_pricer\\settings\\settings.txt"), HashMap.class);
+       } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("  ERROR!!! ошибка при чтении настроек: " + e.getMessage());
+            return null;
+       }
+
+       return settings;
+    }
+
     public void loadAllFiles(){
+
+        Map<String, Map<String,List<Integer>>> settings = readSettings();
+
+        if(settings == null)
+            return;
+
 
 
         File f = new File("D:\\_Share\\_pricer\\");
         File[] matchingFiles = f.listFiles(new FilenameFilter() {
                                                public boolean accept(File dir, String name) {
-                                                   return name.endsWith("xls") || name.endsWith("xlsx");
+                                                   return name.toUpperCase().endsWith("xls".toUpperCase()) || name.toUpperCase().endsWith("xlsx".toUpperCase());
                                                }
                                            });
 
@@ -193,26 +199,25 @@ public class PriceService {//
 
             String supplier = FilenameUtils.removeExtension(file.getName());
 
-
-            List<PriceItem> list = getPriceItems(supplier, file.getAbsolutePath());
-
-
-
             logger.error("  supplier: " + supplier);
 
-            logger.error("  rows count before delete: " + priceRepository.getRowsCount());
 
-            priceRepository.deleteAll(supplier);
+            List<PriceItem> list = getPriceItems(supplier, settings, file.getAbsolutePath());
 
-            logger.error("  rows count after delete: " + priceRepository.getRowsCount());
+            if(list != null){
 
+                priceRepository.deleteAll(supplier);
 
-            priceRepository.saveAll(list);
+                priceRepository.saveAll(list);
 
+                logger.error("  items added: " + list.size());
 
-            logger.error("  rows count after file parse: " + priceRepository.getRowsCount());
+            }
 
         }
+
+        logger.error("db size: " + priceRepository.getDBSize());
+
 
     }
 
