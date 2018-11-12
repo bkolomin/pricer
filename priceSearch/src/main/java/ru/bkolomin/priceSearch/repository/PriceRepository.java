@@ -39,8 +39,8 @@ public class PriceRepository {
 
     public void save(PriceItem priceItem){
 
-        jdbcTemplate.update("INSERT INTO price (supplier, comment, scode, vcode, name, price, stock) VALUES (?, ?, ?, ?, ?, ?)",
-                priceItem.getSupplier(), priceItem.getComment(), priceItem.getScode(), priceItem.getVcode(), priceItem.getName(), priceItem.getPrice(), priceItem.getStock());
+        jdbcTemplate.update("INSERT INTO price (supplier, comment, scode, vcode, name, price, stock, priceDate) VALUES (?, ?, ?, ?, ?, ?)",
+                priceItem.getSupplier(), priceItem.getComment(), priceItem.getScode(), priceItem.getVcode(), priceItem.getName(), priceItem.getPrice(), priceItem.getStock(), priceItem.getPriceDate());
 
     }
 
@@ -52,7 +52,7 @@ public class PriceRepository {
 
         for(int i = 0; i < words.length; i++){
 
-            condition = condition + (condition.length() == 0?"":" AND ") + "(UPPER(price.name || ' ' || price.vcode || ' ' || price.scode) LIKE '%' || UPPER(?) || '%')";
+            condition = condition + (condition.length() == 0?"":" AND ") + "(UPPER(CONCAT(price.name, ' ', price.vcode, ' ', price.scode)) LIKE '%' || UPPER(?) || '%')";
 
         }
 

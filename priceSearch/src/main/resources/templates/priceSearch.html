@@ -20,12 +20,13 @@
 <table class="search-result-table">
     <thead>
     <tr>
-        <th> Name </th>
-        <th> Price </th>
-        <th> Stock </th>
-        <th> </th>
-        <th> </th>
-        <th> </th>
+        <th width="150px"> s.code </th>
+        <th width="150px"> v.code </th>
+        <th width="500px"> Name </th>
+        <th width="100px"> Price </th>
+        <th width="80px"> Stock </th>
+        <th width="80px"> Supplier </th>
+        <th width="100px"> Date </th>
     </tr>
     </thead>
     <tbody>
@@ -33,12 +34,13 @@
         <td colspan="2"> Nothing found </td>
     </tr>
     <tr th:each="item : ${items}">
+        <td><span th:text="${item.scode}"> </span></td>
+        <td><span th:text="${item.vcode}"> </span></td>
         <td><span th:text="${item.name}"> name </span></td>
         <td><span th:text="${item.price}"> price </span></td>
         <td><span th:text="${item.stock}"> </span></td>
         <td><span th:text="${item.supplier}"> </span></td>
-        <td><span th:text="${item.code}"> </span></td>
-        <td><span th:text="${item.comment}"> </span></td>
+        <td><span th:text="${item.priceDate}"> </span></td>
     </tr>
     </tbody>
 </table>

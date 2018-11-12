@@ -1,5 +1,7 @@
 package ru.bkolomin.priceSearch.models;
 
+import java.util.Date;
+
 public class PriceItem {
 
     private String supplier;
@@ -10,11 +12,12 @@ public class PriceItem {
     private String name;
     private Double price;
     private String stock;
+    private Date priceDate;
 
     public PriceItem() {
     }
 
-    public PriceItem(String supplier, Integer rowNumber, String comment, String scode, String vcode, String name, Double price, String stock) {
+    public PriceItem(String supplier, Integer rowNumber, String comment, String scode, String vcode, String name, Double price, String stock, Date priceDate) {
         this.supplier = supplier;
         this.rowNumber = rowNumber;
         this.comment = comment;
@@ -23,6 +26,7 @@ public class PriceItem {
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.priceDate = priceDate;
     }
 
     public String getSupplier() {
@@ -87,6 +91,14 @@ public class PriceItem {
 
     public void setStock(String stock) {
         this.stock = stock;
+    }
+
+    public Date getPriceDate() {
+        return priceDate;
+    }
+
+    public void setPriceDate(Date priceDate) {
+        this.priceDate = priceDate;
     }
 
     @Override
