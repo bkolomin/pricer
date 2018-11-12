@@ -1,4 +1,4 @@
-package ru.bkolomin.priceLoader.Models;
+package ru.bkolomin.priceLoader.models;
 
 public class PriceItem {
 

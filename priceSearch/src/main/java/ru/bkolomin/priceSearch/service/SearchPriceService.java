@@ -17,9 +17,9 @@ public class SearchPriceService {
         this.priceRepository = priceRepository;
     }
 
-    public List<PriceItem> findByName(String name){
+    public List<PriceItem> find(String searchString){
 
-        return this.priceRepository.findByName(name);
+        return this.priceRepository.find(searchString);
 
     }
 

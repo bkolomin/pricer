@@ -5,7 +5,8 @@ public class PriceItem {
     private String supplier;
     private Integer rowNumber;
     private String comment;
-    private String code;
+    private String scode;
+    private String vcode;
     private String name;
     private Double price;
     private String stock;
@@ -13,14 +14,15 @@ public class PriceItem {
     public PriceItem() {
     }
 
-    public PriceItem(String supplier, Integer rowNumber, String comment, String code, String name, Double price, String stock) {
+    public PriceItem(String supplier, Integer rowNumber, String comment, String scode, String vcode, String name, Double price, String stock) {
         this.supplier = supplier;
         this.rowNumber = rowNumber;
         this.comment = comment;
-        this.code = code;
+        this.scode = scode;
+        this.vcode = vcode;
         this.name = name;
         this.price = price;
-        this.stock = stock;//++**
+        this.stock = stock;
     }
 
     public String getSupplier() {
@@ -47,12 +49,20 @@ public class PriceItem {
         this.comment = comment;
     }
 
-    public String getCode() {
-        return code;
+    public String getScode() {
+        return scode;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setScode(String scode) {
+        this.scode = scode;
+    }
+
+    public String getVcode() {
+        return vcode;
+    }
+
+    public void setVcode(String vcode) {
+        this.vcode = vcode;
     }
 
     public String getName() {
@@ -84,7 +94,8 @@ public class PriceItem {
         return "PriceItem{" +
                 "rowNumber=" + rowNumber +
                 ", comment='" + comment + '\'' +
-                ", code='" + code + '\'' +
+                ", s code='" + scode + '\'' +
+                ", v code='" + scode + '\'' +
                 ", name='" + name + '\'' +
                 ", price=" + price +
                 ", stock='" + stock + '\'' +

@@ -1,4 +1,4 @@
-package ru.bkolomin.priceSearch.controller;
+package ru.bkolomin.priceSearch.webController;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -23,7 +23,7 @@ public class searchPriceController {
     @GetMapping("/priceSearch")
     public String priceSearch(@RequestParam(name="search", required=false, defaultValue = "") String searchString, Model model) {
 
-        ArrayList<PriceItem> items = (ArrayList<PriceItem>)searchPriceService.findByName(searchString);
+        ArrayList<PriceItem> items = (ArrayList<PriceItem>)searchPriceService.find(searchString);
 
         model.addAttribute("items", items);
 

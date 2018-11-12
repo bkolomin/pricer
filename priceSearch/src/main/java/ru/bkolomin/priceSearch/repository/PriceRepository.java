@@ -39,20 +39,20 @@ public class PriceRepository {
 
     public void save(PriceItem priceItem){
 
-        jdbcTemplate.update("INSERT INTO price (supplier, comment, code, name, price, stock) VALUES (?, ?, ?, ?, ?, ?)",
-                priceItem.getSupplier(), priceItem.getComment(), priceItem.getCode(), priceItem.getName(), priceItem.getPrice(), priceItem.getStock());
+        jdbcTemplate.update("INSERT INTO price (supplier, comment, scode, vcode, name, price, stock) VALUES (?, ?, ?, ?, ?, ?)",
+                priceItem.getSupplier(), priceItem.getComment(), priceItem.getScode(), priceItem.getVcode(), priceItem.getName(), priceItem.getPrice(), priceItem.getStock());
 
     }
 
-    public List<PriceItem> findByName(String name){
+    public List<PriceItem> find(String searchString){
 
-        String[] words = name.split(" ");
+        String[] words = searchString.split(" ");
 
         String condition = "";
 
         for(int i = 0; i < words.length; i++){
 
-            condition = condition + (condition.length() == 0?"":" AND ") + "(UPPER(price.name) LIKE '%' || UPPER(?) || '%')";
+            condition = condition + (condition.length() == 0?"":" AND ") + "(UPPER(price.name || ' ' || price.vcode || ' ' || price.scode) LIKE '%' || UPPER(?) || '%')";
 
         }
 
